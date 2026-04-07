@@ -598,12 +598,15 @@ conn_loop(void)
                 tty.rxlen = 8;
                 break;
               default:
-                tty.rxlen = tty.txlen;
+                /* Unknown/vendor-specific FC: use full buffer and rely on
+                   timeout + CRC to determine actual response length */
+                tty.rxlen = TTY_BUFSIZE;
                 break;
             }
             if (tty.rxlen > TTY_BUFSIZE)
               tty.rxlen = TTY_BUFSIZE;
-            tty.timer += DV(tty.rxlen, tty.bpc, tty.speed);
+            if (tty.rxlen < TTY_BUFSIZE)
+              tty.timer += DV(tty.rxlen, tty.bpc, tty.speed);
 #ifdef DEBUG
             logw(5, "tty: estimated %d bytes, waiting %lu usec", tty.rxlen, tty.timer);
 #endif
